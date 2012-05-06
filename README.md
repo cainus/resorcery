@@ -1,2 +1,2 @@
-resourcery
+resorcery
 ==========
