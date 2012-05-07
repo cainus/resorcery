@@ -7,9 +7,11 @@ describe('resource', function(){
 
   var FakeRes = function(){
     this.body = '';
+    this.written = '';
     this.headers = {};
     this.status = 0;
     this.end =function(data){ this.body = data || ''; }
+    this.write =function(data){ this.written = data || ''; }
     this.writeHead = function(code){this.status = '' + code;}
     this.setHeader = function(name, value){this.headers[name] = value;}
     this.expectHeader = function(name, value){
@@ -25,24 +27,50 @@ describe('resource', function(){
     this.expectStatus = function(status){
       this.status.should.equal(status);
     }
-    this.expectEnd = function() { 
-      var args = _.toArray(arguments);
-      var diff = _.difference(this.sendArgs, args)
-      if (diff.length != 0){ 
-        should.fail("Expected send(" + 
-                    args.join(", ") + 
-                    ") but got send(" + 
-                    this.sendArgs.join(", ") + ")")
+    this.expectWrite = function(str) { 
+      if (str !== this.written){
+        should.fail("Expected write(" + str + ") but got write(" +
+                    this.written + ")")
+      }
+    }
+    this.expectEnd = function(str) { 
+      if (str !== this.body){
+        should.fail("Expected end(" + str + ") but got end(" +
+                    this.body + ")")
       }
     }
   }
   describe('#OPTIONS', function(){
-    // TODO
+    it ('returns possible methods in the Allow header', function(){
+      var r = new resource({
+        GET : function(req, res){res.end('not here')}
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.OPTIONS(req, res);
+      res.expectStatus('204')
+      res.expectHeader('Allow', 'OPTIONS,HEAD,GET');
+      res.expectEnd('')
+    });
   });
 
   describe('#HEAD', function(){
     it ('returns an empty body with the same headers as GET', function(){
-      // TODO 
+      var r = new resource({
+        GET : function(req, res){
+          res.writeHead(200)
+          res.setHeader('Content-Type', 'plain/text')
+          res.write('test');
+          res.end('not here')
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.HEAD(req, res);
+      res.expectStatus('200')
+      res.expectHeader('Content-Type', 'plain/text');
+      res.expectEnd('')
+      res.expectWrite('')
     });
     it ("405s if GET isn't implemented", function(){
       var r = new resource({
@@ -53,6 +81,151 @@ describe('resource', function(){
       r.HEAD(req, res);
       res.expectStatus('405')
       res.expectHeader('Allow', 'OPTIONS,POST');
+      res.expectEnd('')
+    });
+  });
+
+  describe('fetch', function(){
+    it ('fetches for OPTIONS', function(){
+      var r = new resource({
+        fetch : function(res){
+          return null;
+        },
+        OPTIONS : function(req, res){
+          res.writeHead(200);
+          res.end();
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.OPTIONS(req, res);
+      res.expectStatus('404')
+    });
+
+    it ('fetches for PUT', function(){
+      var r = new resource({
+        fetch : function(res){
+          return null;
+        },
+        PUT : function(req, res){
+          res.writeHead(200);
+          res.end();
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.PUT(req, res);
+      res.expectStatus('404')
+    });
+
+    it ('fetches for HEAD', function(){
+      var r = new resource({
+        fetch : function(res){
+          return null;
+        },
+        GET : function(req, res){
+          res.writeHead(200);
+          res.end();
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.HEAD(req, res);
+      res.expectStatus('404')
+    });
+
+    it ('fetches for POST', function(){
+      var r = new resource({
+        fetch : function(res){
+          return null;
+        },
+        POST : function(req, res){
+          res.writeHead(200);
+          res.end();
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.POST(req, res);
+      res.expectStatus('404')
+    });
+
+    it ('fetches for DELETE', function(){
+      var r = new resource({
+        fetch : function(res){
+          return null;
+        },
+        DELETE : function(req, res){
+          res.writeHead(200);
+          res.end();
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.DELETE(req, res);
+      res.expectStatus('404')
+    });
+
+    it ('when defined, creates req.resource.fetched', function(){
+      var r = new resource({
+        fetch : function(res){
+          return {test : 'resource'}
+        },
+        GET : function(req, res){
+          res.writeHead(200);
+          res.end(JSON.stringify(req.resource.fetched));
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.GET(req, res);
+      res.expectStatus('200')
+      res.expectEnd('{"test":"resource"}')
+    })
+
+    it ('when defined and returns null, the resource 404s', function(){
+      var r = new resource({
+        fetch : function(res){
+          return null;
+        },
+        GET : function(req, res){
+          res.writeHead(200);
+          res.end(JSON.stringify(req.resource.fetched));
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.GET(req, res);
+      res.expectStatus('404')
+    });
+
+    it ('when defined throws an exception, the resource 404s', function(){
+      var r = new resource({
+        fetch : function(res){
+          throw 'not found';
+        },
+        GET : function(req, res){
+          res.writeHead(200);
+          res.end(JSON.stringify(req.resource.fetched));
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.GET(req, res);
+      res.expectStatus('404')
+    });
+
+  });
+  describe('#POST', function(){
+    it ("405s if POST isn't implemented", function(){
+      var r = new resource({
+        PUT : function(req, res){res.end('not here')}
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.POST(req, res);
+      res.expectStatus('405')
+      res.expectHeader('Allow', 'OPTIONS,PUT');
       res.expectEnd('')
     });
   });
@@ -69,21 +242,5 @@ describe('resource', function(){
       res.expectHeader('Allow', 'OPTIONS,POST');
       res.expectEnd('')
     });
-    it ('when fetch is defined, creates req.resource.fetched', function(){
-      var r = new resource({
-        fetch : function(res){
-          return {test : 'resource'}
-        },
-        GET : function(req, res){
-          res.writeHead(200);
-          res.end(JSON.stringify(req.resource.fetched));
-        }
-      });
-      var req = {}
-      var res = new FakeRes();
-      r.GET(req, res);
-      res.expectStatus('200')
-      res.expectEnd('{"test":"resource"}')
-    })
   });
 });
