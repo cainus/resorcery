@@ -3,6 +3,26 @@ var hottap = require('hottap').hottap;
 var _ = require('underscore');
 var resource = require('../index').resource;
 
+
+// what abouts...
+/*
+
+authorization (403)
+authentication (401)
+create-via-put
+acceptable media-types (produces)
+available content-types (consumes)
+conditional GET
+redirects
+cache control
+create static file streaming resource
+setting non-representation responses
+logging / dtrace
+throttling?
+collection / member resources
+
+*/
+
 describe('resource', function(){
 
   var FakeRes = function(){
@@ -52,9 +72,39 @@ describe('resource', function(){
       res.expectHeader('Allow', 'OPTIONS,HEAD,GET');
       res.expectEnd('')
     });
+    it ('can be overridden in the input', function(){
+      var r = new resource({
+        OPTIONS : function(req, res){
+          res.writeHead(200)
+          res.setHeader('Content-Type', 'plain/text')
+          res.end('this feels so wrong')
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.OPTIONS(req, res);
+      res.expectStatus('200')
+      res.expectHeader('Content-Type', 'plain/text');
+      res.expectEnd('this feels so wrong')
+    });
   });
 
   describe('#HEAD', function(){
+    it ('can be overridden in the input', function(){
+      var r = new resource({
+        HEAD : function(req, res){
+          res.writeHead(200)
+          res.setHeader('Content-Type', 'plain/text')
+          res.end('this feels so wrong')
+        }
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.HEAD(req, res);
+      res.expectStatus('200')
+      res.expectHeader('Content-Type', 'plain/text');
+      res.expectEnd('this feels so wrong')
+    });
     it ('returns an empty body with the same headers as GET', function(){
       var r = new resource({
         GET : function(req, res){
@@ -134,6 +184,26 @@ describe('resource', function(){
       res.expectStatus('404')
     });
 
+    it ('fetches for overriden HEAD', function(){
+      var r = new resource({
+        fetch : function(res){
+          return null;
+        },
+        GET : function(req, res){
+          res.writeHead(200);
+          res.end();
+        },
+        HEAD : function(req, res){
+          res.writeHead(200);
+          res.end('this is sooo wrong');
+        }
+
+      });
+      var req = {}
+      var res = new FakeRes();
+      r.HEAD(req, res);
+      res.expectStatus('404')
+    });
     it ('fetches for POST', function(){
       var r = new resource({
         fetch : function(res){

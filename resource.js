@@ -6,6 +6,13 @@ var resource = function(input){
 }
 
 resource.prototype.HEAD = function(req, res){
+  if (_.isFunction(this.input.HEAD)){
+    setResource(req);
+
+    setFetched(this, req, res);
+    if (this.done) return;
+    return this.input.HEAD(req, res)
+  }
   if (!_.isFunction(this.input.GET)){
     return handle405(this, req, res);
   } else {
@@ -25,6 +32,10 @@ resource.prototype.OPTIONS = function(req, res){
 
   setFetched(this, req, res);
   if (this.done) return;
+
+  if (_.isFunction(this.input.OPTIONS)){
+    return this.input.OPTIONS(req, res)
+  }
 
   res.writeHead(204);
   setAllowHeader(this.input, req, res);
