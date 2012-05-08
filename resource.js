@@ -6,15 +6,18 @@ var resource = function(input){
 }
 
 resource.prototype.HEAD = function(req, res){
+  var r = this;
+  // 405 if GET isn't defined.
+  checkMethodAllowed('GET', r, req, res)
+  if (r.done) return;
+
   if (_.isFunction(this.input.HEAD)){
     setResource(req);
-
-    setFetched(this, req, res);
-    if (this.done) return;
-    return this.input.HEAD(req, res)
-  }
-  if (!_.isFunction(this.input.GET)){
-    return handle405(this, req, res);
+    fetch(this, req, res, function(err){
+      if (!err){
+        r.input.HEAD(req, res);
+      }
+    });
   } else {
     // don't allow write() to occur
     res.write = function(){};
@@ -29,65 +32,77 @@ resource.prototype.HEAD = function(req, res){
 
 resource.prototype.OPTIONS = function(req, res){
   setResource(req);
+  var r = this;
+  fetch(this, req, res, function(err){
+    if (!err){
+      checkMethodAllowed('OPTIONS', r, req, res)
+      if (this.done) return;
 
-  setFetched(this, req, res);
-  if (this.done) return;
+      if (_.isFunction(r.input.OPTIONS)){
+        return r.input.OPTIONS(req, res)
+      }
 
-  if (_.isFunction(this.input.OPTIONS)){
-    return this.input.OPTIONS(req, res)
-  }
+      res.writeHead(204);
+      setAllowHeader(r.input, req, res);
+      res.end();
+    }
+  });
 
-  res.writeHead(204);
-  setAllowHeader(this.input, req, res);
-  res.end();
 }
 
 resource.prototype.GET = function(req, res){
   setResource(req);
+  var r = this;
+  fetch(this, req, res, function(err){
+    if (!err){
+      checkMethodAllowed('GET', r, req, res)
+      if (r.done) return;
 
-  setFetched(this, req, res);
-  if (this.done) return;
-
-  checkMethodAllowed('GET', this, req, res)
-  if (this.done) return;
-
-  this.input.GET(req, res);
+      r.input.GET(req, res);
+    }
+  });
 }
 
 resource.prototype.PUT = function(req, res){
   setResource(req);
+  var r = this;
+  fetch(this, req, res, function(err){
+    if (!err){
+      checkMethodAllowed('PUT', r, req, res)
+      if (r.done) return;
 
-  setFetched(this, req, res);
-  if (this.done) return;
-
-  checkMethodAllowed('PUT', this, req, res)
-  if (this.done) return;
-
-  this.input.PUT(req, res);
+      r.input.PUT(req, res);
+    }
+  });
 }
 
 resource.prototype.POST = function(req, res){
   setResource(req);
 
-  setFetched(this, req, res);
-  if (this.done) return;
+  var r = this;
+  fetch(this, req, res, function(err){
+    if (!err){
+      checkMethodAllowed('POST', r, req, res)
+      if (r.done) return;
 
-  checkMethodAllowed('POST', this, req, res)
-  if (this.done) return;
-
-  this.input.POST(req, res);
+      r.input.POST(req, res);
+    }
+  });
 }
 
 resource.prototype.DELETE = function(req, res){
   setResource(req);
 
-  setFetched(this, req, res);
-  if (this.done) return;
+  var r = this;
+  fetch(this, req, res, function(err){
+    if (!err){
+      checkMethodAllowed('DELETE', r, req, res)
+      if (r.done) return;
 
-  checkMethodAllowed('DELETE', this, req, res)
-  if (this.done) return;
+      r.input.DELETE(req, res);
+    }
+  });
 
-  this.input.DELETE(req, res);
 }
 
 exports.resource = resource
@@ -102,17 +117,20 @@ var checkMethodAllowed = function(method, r, req, res){
   }
 }
 
-var setFetched = function(r, req, res){
+var fetch = function(r, req, res, onDone){
   if (_.isFunction(r.input.fetch)){
-    try {
-      req.resource.fetched = r.input.fetch(req);
-    } catch (ex) {
-      // interesting place to log?
-      req.resource.fetched = null;
+    var onFetch = function(err, val){
+      if (err){
+        handle404(r, req, res);
+        onDone(true);
+      } else {
+        req.resource.fetched = val;
+        onDone();
+      }
     }
-    if (!req.resource.fetched){
-      return handle404(r, req, res);
-    }
+    r.input.fetch(req, onFetch);
+  } else {
+    onDone();
   }
 }
 

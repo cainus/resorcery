@@ -96,6 +96,11 @@ describe('resource', function(){
           res.writeHead(200)
           res.setHeader('Content-Type', 'plain/text')
           res.end('this feels so wrong')
+        },
+        GET : function(req, res){
+          res.writeHead(200)
+          res.setHeader('Content-Type', 'plain/text')
+          res.end('some random GET')
         }
       });
       var req = {}
@@ -138,8 +143,8 @@ describe('resource', function(){
   describe('fetch', function(){
     it ('fetches for OPTIONS', function(){
       var r = new resource({
-        fetch : function(res){
-          return null;
+        fetch : function(res, cb){
+          return cb(true);
         },
         OPTIONS : function(req, res){
           res.writeHead(200);
@@ -154,8 +159,8 @@ describe('resource', function(){
 
     it ('fetches for PUT', function(){
       var r = new resource({
-        fetch : function(res){
-          return null;
+        fetch : function(res, cb){
+          return cb(true);
         },
         PUT : function(req, res){
           res.writeHead(200);
@@ -170,8 +175,8 @@ describe('resource', function(){
 
     it ('fetches for HEAD', function(){
       var r = new resource({
-        fetch : function(res){
-          return null;
+        fetch : function(res, cb){
+          return cb(true);
         },
         GET : function(req, res){
           res.writeHead(200);
@@ -186,8 +191,8 @@ describe('resource', function(){
 
     it ('fetches for overriden HEAD', function(){
       var r = new resource({
-        fetch : function(res){
-          return null;
+        fetch : function(res, cb){
+          return cb(true);
         },
         GET : function(req, res){
           res.writeHead(200);
@@ -206,8 +211,8 @@ describe('resource', function(){
     });
     it ('fetches for POST', function(){
       var r = new resource({
-        fetch : function(res){
-          return null;
+        fetch : function(res, cb){
+          return cb(true);
         },
         POST : function(req, res){
           res.writeHead(200);
@@ -222,8 +227,8 @@ describe('resource', function(){
 
     it ('fetches for DELETE', function(){
       var r = new resource({
-        fetch : function(res){
-          return null;
+        fetch : function(res, cb){
+          return cb(true);
         },
         DELETE : function(req, res){
           res.writeHead(200);
@@ -238,8 +243,8 @@ describe('resource', function(){
 
     it ('when defined, creates req.resource.fetched', function(){
       var r = new resource({
-        fetch : function(res){
-          return {test : 'resource'}
+        fetch : function(res, cb){
+          return cb(null, {test : 'resource'});
         },
         GET : function(req, res){
           res.writeHead(200);
@@ -253,26 +258,10 @@ describe('resource', function(){
       res.expectEnd('{"test":"resource"}')
     })
 
-    it ('when defined and returns null, the resource 404s', function(){
+    it ('when defined and sends an error, the resource 404s', function(){
       var r = new resource({
-        fetch : function(res){
-          return null;
-        },
-        GET : function(req, res){
-          res.writeHead(200);
-          res.end(JSON.stringify(req.resource.fetched));
-        }
-      });
-      var req = {}
-      var res = new FakeRes();
-      r.GET(req, res);
-      res.expectStatus('404')
-    });
-
-    it ('when defined throws an exception, the resource 404s', function(){
-      var r = new resource({
-        fetch : function(res){
-          throw 'not found';
+        fetch : function(res, cb){
+          return cb(true);
         },
         GET : function(req, res){
           res.writeHead(200);
