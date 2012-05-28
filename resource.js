@@ -2,6 +2,14 @@ var _ = require('underscore');
 
 var resource = function(input){
   this.input = input;
+  var that = this;
+  // make "this" for all input methods refer to this resource object
+  // instead of the input object
+  _.each(input, function(v, k){
+    if (_.isFunction(v)){
+      input[k] = _.bind(v, that);
+    }
+  });
 }
 
 resource.prototype.HEAD = function(req, res){
@@ -61,30 +69,29 @@ var getMethodHandler = function(methodName){
 }
 
 var supportedMethods = [
-  'get'
-  , 'post'
-  , 'put'
-  , 'delete'
-  , 'copy'
-  , 'lock'
-  , 'mkcol'
-  , 'move'
-  , 'propfind'
-  , 'proppatch'
-  , 'unlock'
-  , 'report'
-  , 'mkactivity'
-  , 'checkout'
-  , 'merge'
-  , 'm-search'
-  , 'notify'
-  , 'subscribe'
-  , 'unsubscribe'
-  , 'patch'
+  'GET'
+  , 'POST'
+  , 'PUT'
+  , 'DELETE'
+  , 'COPY'
+  , 'LOCK'
+  , 'MKCOL'
+  , 'MOVE'
+  , 'PROPFIND'
+  , 'PROPPATCH'
+  , 'UNLOCK'
+  , 'REPORT'
+  , 'MKACTIVITY'
+  , 'CHECKOUT'
+  , 'MERGE'
+  , 'M-SEARCH'
+  , 'NOTIFY'
+  , 'SUBSCRIBE'
+  , 'UNSUBSCRIBE'
+  , 'PATCH'
 ]
 
 _.each(supportedMethods, function(method){
-  method = method.toUpperCase()
   resource.prototype[method] = getMethodHandler(method);
 });
 
