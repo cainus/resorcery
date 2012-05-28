@@ -2,14 +2,13 @@ var _ = require('underscore');
 
 var resource = function(input){
   this.input = input;
-  this.done = false;
 }
 
 resource.prototype.HEAD = function(req, res){
   var r = this;
   // 405 if GET isn't defined.
   checkMethodAllowed('GET', r, req, res)
-  if (r.done) return;
+  if (res.done) return;
 
   if (_.isFunction(this.input.HEAD)){
     setResource(req);
@@ -35,75 +34,59 @@ resource.prototype.OPTIONS = function(req, res){
   var r = this;
   fetch(this, req, res, function(err){
     if (!err){
-      checkMethodAllowed('OPTIONS', r, req, res)
-      if (this.done) return;
-
       if (_.isFunction(r.input.OPTIONS)){
         return r.input.OPTIONS(req, res)
       }
-
-      res.writeHead(204);
       setAllowHeader(r.input, req, res);
+      res.writeHead(204);
       res.end();
     }
   });
 
 }
 
-resource.prototype.GET = function(req, res){
-  setResource(req);
-  var r = this;
-  fetch(this, req, res, function(err){
-    if (!err){
-      checkMethodAllowed('GET', r, req, res)
-      if (r.done) return;
+var getMethodHandler = function(methodName){
+  return function(req, res){
+    setResource(req);
+    var r = this;
+    fetch(this, req, res, function(err){
+      if (!err){
+        checkMethodAllowed(methodName, r, req, res)
+        if (res.done) return;
 
-      r.input.GET(req, res);
-    }
-  });
+        r.input[methodName](req, res);
+      }
+    });
+  }
 }
 
-resource.prototype.PUT = function(req, res){
-  setResource(req);
-  var r = this;
-  fetch(this, req, res, function(err){
-    if (!err){
-      checkMethodAllowed('PUT', r, req, res)
-      if (r.done) return;
+var supportedMethods = [
+  'get'
+  , 'post'
+  , 'put'
+  , 'delete'
+  , 'copy'
+  , 'lock'
+  , 'mkcol'
+  , 'move'
+  , 'propfind'
+  , 'proppatch'
+  , 'unlock'
+  , 'report'
+  , 'mkactivity'
+  , 'checkout'
+  , 'merge'
+  , 'm-search'
+  , 'notify'
+  , 'subscribe'
+  , 'unsubscribe'
+  , 'patch'
+]
 
-      r.input.PUT(req, res);
-    }
-  });
-}
-
-resource.prototype.POST = function(req, res){
-  setResource(req);
-
-  var r = this;
-  fetch(this, req, res, function(err){
-    if (!err){
-      checkMethodAllowed('POST', r, req, res)
-      if (r.done) return;
-
-      r.input.POST(req, res);
-    }
-  });
-}
-
-resource.prototype.DELETE = function(req, res){
-  setResource(req);
-
-  var r = this;
-  fetch(this, req, res, function(err){
-    if (!err){
-      checkMethodAllowed('DELETE', r, req, res)
-      if (r.done) return;
-
-      r.input.DELETE(req, res);
-    }
-  });
-
-}
+_.each(supportedMethods, function(method){
+  method = method.toUpperCase()
+  resource.prototype[method] = getMethodHandler(method);
+});
 
 exports.resource = resource
 
@@ -111,8 +94,9 @@ var setResource = function(req){
   req.resource = req.resource || {};
 }
 
+
 var checkMethodAllowed = function(method, r, req, res){
-  if (!r.input[method]){
+  if (!_.isFunction(r.input[method])){
     handle405(r, req, res);
   }
 }
@@ -135,13 +119,13 @@ var fetch = function(r, req, res, onDone){
 }
 
 var handle405 = function(r, req, res){
-  r.done = true;
-  res.writeHead(405);
+  res.done = true;
   setAllowHeader(r.input, req, res);
+  res.writeHead(405);
   res.end();
 };
 var handle404 = function(r, req, res){
-  r.done = true;
+  res.done = true;
   res.writeHead(404);
   res.end();
 };
