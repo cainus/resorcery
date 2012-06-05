@@ -126,15 +126,23 @@ var fetch = function(r, req, res, onDone){
 }
 
 var handle405 = function(r, req, res){
+  if (_.isFunction(r.handle405)){
+    r.handle405(req, res);
+  } else {
+    setAllowHeader(r.input, req, res);
+    res.writeHead(405);
+    res.end();
+  }
   res.done = true;
-  setAllowHeader(r.input, req, res);
-  res.writeHead(405);
-  res.end();
 };
 var handle404 = function(r, req, res){
+  if (_.isFunction(r.handle404)){
+    r.handle404(req, res);
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
   res.done = true;
-  res.writeHead(404);
-  res.end();
 };
 
 setAllowHeader = function(obj, req, res){
