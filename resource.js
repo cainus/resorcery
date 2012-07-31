@@ -48,7 +48,7 @@ resource.prototype.OPTIONS = function(req, res){
 var getMethodHandler = function(methodName){
   return function(req, res){
     setResource(req);
-    var r = this;   // TODO WTF is this?
+    var r = this; 
     fetch(r, req, res, function(err){
       if (!err){
         checkMethodAllowed(methodName, r, req, res);
