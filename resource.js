@@ -2,27 +2,19 @@ var _ = require('underscore');
 
 var resource = function(input){
   this.input = input;
-  var that = this;
-  // make "this" for all input methods refer to this resource object
-  // instead of the input object
-  _.each(input, function(v, k){
-    if (_.isFunction(v)){
-      input[k] = _.bind(v, that);
-    }
-  });
-}
+};
 
 resource.prototype.HEAD = function(req, res){
   var r = this;
   // 405 if GET isn't defined.
-  checkMethodAllowed('GET', r, req, res)
+  checkMethodAllowed('GET', r, req, res);
   if (res.done) return;
 
-  if (_.isFunction(this.input.HEAD)){
+  if (_.isFunction(r.input.HEAD)){
     setResource(req);
-    fetch(this, req, res, function(err){
+    fetch(r, req, res, function(err){
       if (!err){
-        r.input.HEAD(req, res);
+        r.input.HEAD.apply(r, [req, res]);
       }
     });
   } else {
@@ -33,17 +25,17 @@ resource.prototype.HEAD = function(req, res){
     res.end = function(){
       res.origEnd();
     };
-    this.GET(req, res);  // note that we call our own GET
+    r.GET(req, res);  // note that we call our own GET
   }
-}
+};
 
 resource.prototype.OPTIONS = function(req, res){
   setResource(req);
   var r = this;
-  fetch(this, req, res, function(err){
+  fetch(r, req, res, function(err){
     if (!err){
       if (_.isFunction(r.input.OPTIONS)){
-        return r.input.OPTIONS(req, res)
+        return r.input.OPTIONS.apply(r, [req, res]);
       }
       setAllowHeader(r.input, req, res);
       res.writeHead(204);
@@ -51,62 +43,61 @@ resource.prototype.OPTIONS = function(req, res){
     }
   });
 
-}
+};
 
 var getMethodHandler = function(methodName){
   return function(req, res){
     setResource(req);
-    var r = this;
-    fetch(this, req, res, function(err){
+    var r = this;   // TODO WTF is this?
+    fetch(r, req, res, function(err){
       if (!err){
-        checkMethodAllowed(methodName, r, req, res)
+        checkMethodAllowed(methodName, r, req, res);
         if (res.done) return;
-
-        r.input[methodName](req, res);
+        r.input[methodName].apply(r, [req, res]);
       }
     });
-  }
-}
+  };
+};
 
 var supportedMethods = [
-  'GET'
-  , 'POST'
-  , 'PUT'
-  , 'DELETE'
-  , 'COPY'
-  , 'LOCK'
-  , 'MKCOL'
-  , 'MOVE'
-  , 'PROPFIND'
-  , 'PROPPATCH'
-  , 'UNLOCK'
-  , 'REPORT'
-  , 'MKACTIVITY'
-  , 'CHECKOUT'
-  , 'MERGE'
-  , 'M-SEARCH'
-  , 'NOTIFY'
-  , 'SUBSCRIBE'
-  , 'UNSUBSCRIBE'
-  , 'PATCH'
-]
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'COPY',
+  'LOCK',
+  'MKCOL',
+  'MOVE',
+  'PROPFIND',
+  'PROPPATCH',
+  'UNLOCK',
+  'REPORT',
+  'MKACTIVITY',
+  'CHECKOUT',
+  'MERGE',
+  'M-SEARCH',
+  'NOTIFY',
+  'SUBSCRIBE',
+  'UNSUBSCRIBE',
+  'PATCH'
+];
 
 _.each(supportedMethods, function(method){
   resource.prototype[method] = getMethodHandler(method);
 });
 
-exports.resource = resource
+exports.resource = resource;
 
 var setResource = function(req){
   req.resource = req.resource || {};
-}
+};
 
 
 var checkMethodAllowed = function(method, r, req, res){
   if (!_.isFunction(r.input[method])){
     handle405(r, req, res);
   }
-}
+};
 
 var fetch = function(r, req, res, onDone){
   if (_.isFunction(r.input.fetch)){
@@ -118,12 +109,12 @@ var fetch = function(r, req, res, onDone){
         req.resource.fetched = val;
         onDone();
       }
-    }
-    r.input.fetch(req, onFetch);
+    };
+    r.input.fetch.apply(r, [req, onFetch]);
   } else {
     onDone();
   }
-}
+};
 
 var handle405 = function(r, req, res){
   if (_.isFunction(r.handle405)){
@@ -151,7 +142,7 @@ setAllowHeader = function(obj, req, res){
 
 var allowHeader = function(obj){
   var methods = getMethods(obj);
-  var additionalMethods = ['OPTIONS']
+  var additionalMethods = ['OPTIONS'];
   if (_.isFunction(obj.GET)){
     additionalMethods.push('HEAD');
   }
