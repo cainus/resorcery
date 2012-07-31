@@ -12,9 +12,9 @@ collection.prototype.POST = function(req, res){
   //if (this.done) return;
 
   try {
-    this.input.POST(req, res);
+    this.input.POST.call(this, [req, res]);
   } catch (ex) {
-    if (ex + '' === "TypeError: Object #<Object> has no method 'POST'"){
+    if (ex + '' === "TypeError: Cannot call method 'call' of undefined"){
       return handle405(this, req, res);
     } else {
       console.log("*" + ex + "*");
