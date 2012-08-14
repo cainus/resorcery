@@ -136,7 +136,7 @@ var handle404 = function(r, req, res){
   res.done = true;
 };
 
-setAllowHeader = function(obj, req, res){
+var setAllowHeader = function(obj, req, res){
   res.setHeader('Allow', allowHeader(obj));
 };
 
