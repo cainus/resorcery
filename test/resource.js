@@ -3,7 +3,7 @@ var hottap = require('hottap').hottap;
 var _ = require('underscore');
 var resource = require('../index').resource;
 
-
+// TODO
 // what abouts...
 /*
 
@@ -30,62 +30,62 @@ describe('resource', function(){
     this.written = '';
     this.headers = {};
     this.status = 0;
-    this.end =function(data){ this.body = data || ''; }
-    this.write =function(data){ this.written = data || ''; }
-    this.writeHead = function(code){this.status = '' + code;}
-    this.setHeader = function(name, value){this.headers[name] = value;}
+    this.end =function(data){ this.body = data || ''; };
+    this.write =function(data){ this.written = data || ''; };
+    this.writeHead = function(code){this.status = '' + code;};
+    this.setHeader = function(name, value){this.headers[name] = value;};
     this.expectHeader = function(name, value){
       if (!this.headers[name]){
-        should.fail("header " + name + " was not set.")
+        should.fail("header " + name + " was not set.");
       }
       if (this.headers[name] != value){
         should.fail("header " + name + 
                     " was supposed to be " + value + 
-                    " but was " + this.headers[name] + ".")
+                    " but was " + this.headers[name] + ".");
       }
-    }
+    };
     this.expectStatus = function(status){
       this.status.should.equal(status);
-    }
+    };
     this.expectWrite = function(str) { 
       if (str !== this.written){
         should.fail("Expected write(" + str + ") but got write(" +
-                    this.written + ")")
+                    this.written + ")");
       }
-    }
+    };
     this.expectEnd = function(str) { 
       if (str !== this.body){
         should.fail("Expected end(" + str + ") but got end(" +
-                    this.body + ")")
+                    this.body + ")");
       }
-    }
-  }
+    };
+  };
   describe('#OPTIONS', function(){
     it ('returns possible methods in the Allow header', function(){
       var r = new resource({
-        GET : function(req, res){res.end('not here')}
+        GET : function(req, res){res.end('not here');}
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.OPTIONS(req, res);
-      res.expectStatus('204')
+      res.expectStatus('204');
       res.expectHeader('Allow', 'OPTIONS,HEAD,GET');
-      res.expectEnd('')
+      res.expectEnd('');
     });
     it ('can be overridden in the input', function(){
       var r = new resource({
         OPTIONS : function(req, res){
-          res.writeHead(200)
-          res.setHeader('Content-Type', 'plain/text')
-          res.end('this feels so wrong')
+          res.writeHead(200);
+          res.setHeader('Content-Type', 'plain/text');
+          res.end('this feels so wrong');
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.OPTIONS(req, res);
-      res.expectStatus('200')
+      res.expectStatus('200');
       res.expectHeader('Content-Type', 'plain/text');
-      res.expectEnd('this feels so wrong')
+      res.expectEnd('this feels so wrong');
     });
   });
 
@@ -93,50 +93,50 @@ describe('resource', function(){
     it ('can be overridden in the input', function(){
       var r = new resource({
         HEAD : function(req, res){
-          res.writeHead(200)
-          res.setHeader('Content-Type', 'plain/text')
-          res.end('this feels so wrong')
+          res.writeHead(200);
+          res.setHeader('Content-Type', 'plain/text');
+          res.end('this feels so wrong');
         },
         GET : function(req, res){
-          res.writeHead(200)
-          res.setHeader('Content-Type', 'plain/text')
-          res.end('some random GET')
+          res.writeHead(200);
+          res.setHeader('Content-Type', 'plain/text');
+          res.end('some random GET');
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.HEAD(req, res);
-      res.expectStatus('200')
+      res.expectStatus('200');
       res.expectHeader('Content-Type', 'plain/text');
-      res.expectEnd('this feels so wrong')
+      res.expectEnd('this feels so wrong');
     });
     it ('returns an empty body with the same headers as GET', function(){
       var r = new resource({
         GET : function(req, res){
-          res.writeHead(200)
-          res.setHeader('Content-Type', 'plain/text')
+          res.writeHead(200);
+          res.setHeader('Content-Type', 'plain/text');
           res.write('test');
-          res.end('not here')
+          res.end('not here');
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.HEAD(req, res);
-      res.expectStatus('200')
+      res.expectStatus('200');
       res.expectHeader('Content-Type', 'plain/text');
-      res.expectEnd('')
-      res.expectWrite('')
+      res.expectEnd('');
+      res.expectWrite('');
     });
     it ("405s if GET isn't implemented", function(){
       var r = new resource({
-        POST : function(req, res){res.end('not here')}
+        POST : function(req, res){res.end('not here');}
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.HEAD(req, res);
-      res.expectStatus('405')
+      res.expectStatus('405');
       res.expectHeader('Allow', 'OPTIONS,POST');
-      res.expectEnd('')
+      res.expectEnd('');
     });
   });
 
@@ -151,10 +151,10 @@ describe('resource', function(){
           res.end();
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.OPTIONS(req, res);
-      res.expectStatus('404')
+      res.expectStatus('404');
     });
 
     it ('fetches for PUT', function(){
@@ -167,10 +167,10 @@ describe('resource', function(){
           res.end();
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.PUT(req, res);
-      res.expectStatus('404')
+      res.expectStatus('404');
     });
 
     it ('fetches for HEAD', function(){
@@ -183,10 +183,10 @@ describe('resource', function(){
           res.end();
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.HEAD(req, res);
-      res.expectStatus('404')
+      res.expectStatus('404');
     });
 
     it ('fetches for overriden HEAD', function(){
@@ -204,10 +204,10 @@ describe('resource', function(){
         }
 
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.HEAD(req, res);
-      res.expectStatus('404')
+      res.expectStatus('404');
     });
     it ('fetches for POST', function(){
       var r = new resource({
@@ -219,10 +219,10 @@ describe('resource', function(){
           res.end();
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.POST(req, res);
-      res.expectStatus('404')
+      res.expectStatus('404');
     });
 
     it ('fetches for DELETE', function(){
@@ -235,10 +235,10 @@ describe('resource', function(){
           res.end();
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.DELETE(req, res);
-      res.expectStatus('404')
+      res.expectStatus('404');
     });
 
     it ('when defined, creates req.resource.fetched', function(){
@@ -251,12 +251,12 @@ describe('resource', function(){
           res.end(JSON.stringify(req.resource.fetched));
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.GET(req, res);
-      res.expectStatus('200')
-      res.expectEnd('{"test":"resource"}')
-    })
+      res.expectStatus('200');
+      res.expectEnd('{"test":"resource"}');
+    });
 
     it ('when defined and sends an error, the resource 404s', function(){
       var r = new resource({
@@ -268,38 +268,38 @@ describe('resource', function(){
           res.end(JSON.stringify(req.resource.fetched));
         }
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.GET(req, res);
-      res.expectStatus('404')
+      res.expectStatus('404');
     });
 
   });
   describe('#POST', function(){
     it ("405s if POST isn't implemented", function(){
       var r = new resource({
-        PUT : function(req, res){res.end('not here')}
+        PUT : function(req, res){res.end('not here');}
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.POST(req, res);
-      res.expectStatus('405')
+      res.expectStatus('405');
       res.expectHeader('Allow', 'OPTIONS,PUT');
-      res.expectEnd('')
+      res.expectEnd('');
     });
   });
 
   describe('#GET', function(){
     it ("405s if GET isn't implemented", function(){
       var r = new resource({
-        POST : function(req, res){res.end('not here')}
+        POST : function(req, res){res.end('not here');}
       });
-      var req = {}
+      var req = {};
       var res = new FakeRes();
       r.GET(req, res);
-      res.expectStatus('405')
+      res.expectStatus('405');
       res.expectHeader('Allow', 'OPTIONS,POST');
-      res.expectEnd('')
+      res.expectEnd('');
     });
   });
 });
