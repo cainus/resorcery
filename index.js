@@ -1,3 +1,3 @@
-exports.resource = require('./resource').resource;
-exports.collection = require('./collection').collection;
+exports.resource = require('./lib/resource');
+exports.route = require('./lib/route');
 
