@@ -8,7 +8,7 @@
     "resource",
     "resources"
   ],
-  "version": "0.2.1",
+  "version": "1.0.0",
   "bugs": {
     "url": "https://github.com/cainus/resorcery/issues"
   },
@@ -24,13 +24,16 @@
   ],
   "dependencies": {
     "underscore": "",
-    "request": "~2.27.0"
+    "request": "2.27.0",
+    "jshint": "^2.4.4",
+    "istanbul": "^0.2.6"
   },
   "devDependencies": {
     "watch": "0.5.1",
     "hottap": "1.0.0",
     "mocha": "1.3.2",
-    "should": "1.1.0"
+    "should": "1.1.0",
+    "detour": "1.0.1"
   },
   "repository": "git@github.com:cainus/resorcery.git",
   "main": "./resourcery",
