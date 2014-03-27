@@ -15,6 +15,17 @@ module.exports = function(obj, options) {
   obj = applyAuthenticate(obj, notAuthenticatedStrategy, internalServerErrorStrategy);
   obj = applyFetch(obj, notFoundStrategy, internalServerErrorStrategy);
   obj = add405s(obj, methodNotAllowedStrategy);
+  var allowedOverrideTypes = ['optionsStrategy',
+                          'notAuthenticatedStrategy',
+                          'forbiddenStrategy',
+                          'internalServerErrorStrategy',
+                          'methodNotAllowedStrategy',
+                          'notFoundStrategy'];
+  _.each(options, function(value, key){
+    if (allowedOverrideTypes.indexOf(key) === -1){
+      throw new Error("Unknown option name: " + key);
+    }
+  });
   return obj;
 };
 

@@ -1,10 +1,8 @@
 var should = require('should');
-var hottap = require('hottap').hottap;
 var _ = require('underscore');
 var detour = require('detour');
 var resource = require('../index');
 var http = require('http');
-var hottap = require('hottap').hottap;
 var request = require('request');
 var server;
 
