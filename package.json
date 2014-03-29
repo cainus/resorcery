@@ -26,7 +26,8 @@
     "underscore": "",
     "request": "2.27.0",
     "jshint": "2.4.4",
-    "istanbul": "0.2.6"
+    "istanbul": "0.2.6",
+    "coveralls": "^2.10.0"
   },
   "devDependencies": {
     "watch": "0.5.1",
