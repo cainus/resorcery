@@ -51,10 +51,14 @@ var getHandlerFor405s = function(allowedMethods, methodNotAllowedStrategy){
 };
 
 /*
-  @obj : the original input object
-  @helperMethodName : fetch, authenticate, forbid, etc
-  @trueHandler : the function to call when the helper methods does a cb(true)
-  @errorHandler : the function to call when the helper method does a cb(someError)
+
+  applier() applies a single helperMethod (fetch, authenticate, or forbid) to each 
+  HTTP method handler in the resource object 
+
+  @obj : the original input resource object
+  @helperMethodName : fetch, authenticate, or forbid as a string
+  @trueHandler : the function to call when the helper methods do a cb(true)
+  @errorHandler : the function to call when the helper method do a cb(someError)
   @decorationName : the name of the property of req to attach the object in cb(null, object)
 
 */
@@ -64,11 +68,20 @@ var applier = function(obj, helperMethodName, trueHandler, errorHandler, decorat
     for (methodName in obj) {
       f = obj[methodName];
       if (_.contains(supported, methodName)) {
-        obj[methodName] = wrapper(obj[methodName],
-                                        obj[helperMethodName],
-                                        trueHandler,
-                                        errorHandler,
-                                        decorationName);
+        if (helperMethodName == 'forbid'){
+          // special case for forbid, because it can an array of forbidden methods
+          obj[methodName] = forbidWrapper(obj[methodName],
+                                          obj.forbid,
+                                          trueHandler,
+                                          errorHandler);
+          
+        } else {
+          obj[methodName] = wrapper(obj[methodName],
+                                          obj[helperMethodName],
+                                          trueHandler,
+                                          errorHandler,
+                                          decorationName);
+        }
       }
     }
     delete obj[helperMethodName];
@@ -77,6 +90,9 @@ var applier = function(obj, helperMethodName, trueHandler, errorHandler, decorat
 };
 
 
+/*
+ This function wraps a single HTTP method handler with our fetch or authenticate handlers.
+*/
 var wrapper = function(f, helperMethod, trueHandler, errorHandler, decorationName) {
   return function(req, res) {
     return helperMethod(req, res, function(err, decoration) {
@@ -94,6 +110,41 @@ var wrapper = function(f, helperMethod, trueHandler, errorHandler, decorationNam
   };
 };
 
+
+
+/*
+  This function wraps a single HTTP method handler with our forbidden check.
+
+*/
+var forbidWrapper = function(f, forbid, trueHandler, errorHandler) {
+  return function(req, res) {
+    return forbid(req, res, function(err, forbiddenMethods) {
+      if (err === true) {
+        return trueHandler(req, res);
+      }
+      if (err) {
+        return errorHandler(req, res, err);
+      }
+      if (forbiddenMethods){
+        if (Array.isArray(forbiddenMethods)){
+          forbiddenMethods = forbiddenMethods.map(function(name){
+            return name.toLowerCase();
+          });
+          if (forbiddenMethods.indexOf(req.method.toLowerCase()) !== -1){
+            return trueHandler(req, res);
+          }
+        }
+        if (forbiddenMethods === true){
+          return trueHandler(req, res);
+        }
+
+      }
+      return f(req, res);
+    });
+  };
+};
+
+
 var applyAuthenticate = function(obj, notAuthenticatedStrategy, internalServerErrorStrategy) {
   return applier(obj, 'authenticate', notAuthenticatedStrategy, internalServerErrorStrategy, 'authenticated');
 };
@@ -101,8 +152,8 @@ var applyFetch = function(obj, notFoundStrategy, internalServerErrorStrategy){
   return applier(obj, 'fetch', notFoundStrategy, internalServerErrorStrategy, 'fetched');
 };
 
-var applyForbid = function(obj, forbiddenStrategy, internalServerErrorStrategy){
-  return applier(obj, 'forbid', forbiddenStrategy, internalServerErrorStrategy);
+var applyForbid = function(obj, notFoundStrategy, internalServerErrorStrategy){
+  return applier(obj, 'forbid', notFoundStrategy, internalServerErrorStrategy);
 };
 
 

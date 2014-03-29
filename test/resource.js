@@ -344,6 +344,61 @@ describe('resource', function(){
         );
       });
 
+      it ('does not 403 when second param is an array that does not contain the request method', function(done){
+        testRequest(
+          {
+            forbid : function(req, res, cb){
+              return cb(null, ['GET']);
+            },
+            GET : function(req, res){
+              done(new Error("should never get here"));
+            },
+            POST : function(req, res){
+              return res.end("worked!");
+            }
+          },
+          'POST',
+          function(err, res, body){
+            res.statusCode.should.equal(200);
+            body.should.equal("worked!");
+            done();
+          }
+        );
+      });
+      it ('403s when second param is true', function(done){
+        testRequest(
+          {
+            forbid : function(req, res, cb){
+              return cb(null, true);
+            },
+            GET : function(req, res){
+              done(new Error("should never get here"));
+            }
+          },
+          'GET',
+          function(err, res, body){
+            res.statusCode.should.equal(403);
+            done();
+          }
+        );
+      });
+      it ('403s when second param is an array containing the request method', function(done){
+        testRequest(
+          {
+            forbid : function(req, res, cb){
+              return cb(null, ['GET']);
+            },
+            GET : function(req, res){
+              done(new Error("should never get here"));
+            }
+          },
+          'GET',
+          function(err, res, body){
+            res.statusCode.should.equal(403);
+            done();
+          }
+        );
+      });
       it ('500s when given a first param that is a non-true object.', function(done){
         testRequest(
           {
