@@ -13,7 +13,7 @@
     "url": "https://github.com/cainus/resorcery/issues"
   },
   "scripts": {
-    "test": "make test"
+    "test": "make test-coveralls"
   },
   "maintainers": [
     {
