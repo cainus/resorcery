@@ -6,7 +6,7 @@
 
 **resorcery** is a node.js library for use in http apis for dealing with a single url as a unified 'resource', rather than a collection of separate functions.  This is useful for a more consistent api, better code re-use, and simpler routing and error-handling.
 
-It is meant primary for use with the [detour](https://github.com/cainus/detour) router, which can be used with [express](http://expressjs.com/) and [connect](http://www.senchalabs.org/connect/) applications, but it's got a simple enough interface that other routers could add support for it easily.
+It is meant primarily for use with the [detour](https://github.com/cainus/detour) router, which can be used with [express](http://expressjs.com/) and [connect](http://www.senchalabs.org/connect/) applications, but it's got a simple enough interface that other routers could add support for it easily.
 
 ## example usage:
 
