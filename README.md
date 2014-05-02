@@ -170,7 +170,7 @@ return cb();
 ###### Usage:
 ```javascript
 {
-    authenticated : myAuthenticationFunction,
+    authenticate : myAuthenticationFunction,
     
     forbid : function(req, res, cb){
         switch(req.authenticated.type){
