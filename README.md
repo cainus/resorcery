@@ -117,7 +117,7 @@ If you do that, then `req.authenticated` will be set to your `userObject` in all
 ###### Usage:
 ```javascript
 {
-    authenticated : function(req, res, cb){
+    authenticate : function(req, res, cb){
         getUserFromSession(req, function(err, user){
             if (err){
                 return cb(err);
@@ -172,7 +172,7 @@ return cb();
 {
     authenticated : myAuthenticationFunction,
     
-    forbidden : function(req, res, cb){
+    forbid : function(req, res, cb){
         switch(req.authenticated.type){
             case 'admin' : return cb();
             case 'writer' : return cb(null, ['DELETE']);
